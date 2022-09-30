@@ -2,6 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.utils import to_categorical
+from keras import layers, Sequential, Input
+import os
 
 # ----------------------------------------------------------------------------------
 #                        DATA PRE-PROCESSING
@@ -25,6 +27,27 @@ def preprocess_data(x, y,nb_classes, verbose=0):
         print(f"[{short_name}]\tINFO : x = {x_preprocess.shape}, y = {y_preprocess.shape} after preprocess")
 
     return x_preprocess, y_preprocess
+
+
+# %% create_model
+# Function to create model, required for KerasClassifier
+def create_model(input_shape, num_classes):
+	# create model
+	model3 = Sequential(
+		[
+			Input(shape=input_shape, name="entree"),
+			layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+			layers.MaxPooling2D(pool_size=(2, 2)),
+			layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+			layers.MaxPooling2D(pool_size=(2, 2)),
+			layers.Flatten(),
+			layers.Dropout(0.5),
+			layers.Dense(num_classes, activation="softmax"),
+		]
+	)
+	print(model3.summary())
+	model3.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+	return model3
 
 # ----------------------------------------------------------------------------------
 #                        GRAPHIQUES
@@ -63,7 +86,7 @@ def plot_pred(x, y, predictions, range=range(0,1)):
         plt.subplot(1,2,1)
         _plot_image(i, predictions[i], y, x)
         plt.subplot(1,2,2)
-        _plot_value_array(i, predictions[i],  y|i)
+        _plot_value_array(i, predictions[i],  y)
         plt.show()
 
 # %% _plot_image
@@ -75,16 +98,13 @@ def _plot_image(i, predictions_array, true_label, img):
 
   plt.imshow(img, cmap=plt.cm.binary)
 
-  predicted_label = np.argmax(predictions_array)
-  if predicted_label == true_label:
-    color = 'blue'
-  else:
-    color = 'red'
-
-  plt.xlabel("{} {:2.0f}% ({})".format(predicted_label,
-                                100*np.max(predictions_array),
-                                true_label),
-                                color=color)
+  predicted_label = np.argmax(np.round(predictions_array, 2))
+  true_label_i = np.argmax(np.round(true_label, 2))
+  color = 'red'
+  if predicted_label == true_label_i:
+    color = 'green'
+  
+  plt.xlabel("Expected {}, Predict : {}".format(true_label_i,predicted_label), color=color)
 
 # %% _plot_value_array
 def _plot_value_array(i, predictions_array, true_label):
@@ -92,16 +112,20 @@ def _plot_value_array(i, predictions_array, true_label):
   plt.grid(False)
   plt.xticks(range(10))
   plt.yticks([])
-  thisplot = plt.bar(range(len(predictions_array)), predictions_array, color="#777777")
+
+  predictions = np.round(predictions_array, 2)
+
+  thisplot = plt.bar(range(len(predictions)), predictions, color="#777777")
   plt.ylim([0, 1])
-  predicted_label = np.argmax(predictions_array)
+  
+  predicted_label = np.argmax(np.round(predictions_array, 2))
+  true_label_i = np.argmax(np.round(true_label, 2))
+  color = 'red'
+  if predicted_label == true_label_i:
+    color = 'green'
 
-  c = 'red'
-#   if predicted_label == true_label:
-#     c = 'green'
-
-  thisplot[true_label].set_color('blue')
-  thisplot[predicted_label].set_color(c)
+  thisplot[true_label_i].set_color('blue')
+  thisplot[predicted_label].set_color(color)
 # ----------------------------------------------------------------------------------
 #                        TEST
 # ----------------------------------------------------------------------------------
