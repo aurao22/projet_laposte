@@ -19,3 +19,8 @@ Les grandes étapes du projet que vous pouvez considérer (temps et difficulté 
 ### Sauvegarde de l'image
 
 https://www.semicolonworld.com/question/55284/how-can-i-convert-canvas-content-to-an-image
+
+
+## Livrables
+- Programme Python
+- ?
