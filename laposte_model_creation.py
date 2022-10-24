@@ -3,11 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras.utils import to_categorical
 from keras import layers, Sequential, Input
-import os
-
+from os import listdir
+from os.path import isfile, join
+import pandas as pd
 # ----------------------------------------------------------------------------------
 #                        DATA PRE-PROCESSING
 # ----------------------------------------------------------------------------------
+# %% preprocess_data
 def preprocess_data(x, y,nb_classes, verbose=0):
     short_name = 'preprocessing'
     if verbose > 0:
@@ -28,7 +30,17 @@ def preprocess_data(x, y,nb_classes, verbose=0):
 
     return x_preprocess, y_preprocess
 
-
+# %% get_dir_files
+def get_dir_files(dir_path, endwith=None, verbose=0):
+    fichiers = None
+    if endwith is not None:
+        fichiers = [f for f in listdir(dir_path) if isfile(join(dir_path, f)) and f.endswith(endwith)]
+    else:
+        fichiers = [f for f in listdir(dir_path) if isfile(join(dir_path, f))]
+    return fichiers
+# ----------------------------------------------------------------------------------
+#                        MODEL
+# ----------------------------------------------------------------------------------
 # %% create_model
 # Function to create model, required for KerasClassifier
 def create_model(input_shape, num_classes):
@@ -50,8 +62,27 @@ def create_model(input_shape, num_classes):
 	return model3
 
 # ----------------------------------------------------------------------------------
-#                        GRAPHIQUES
+# %%                       GRAPHIQUES
 # ----------------------------------------------------------------------------------
+PLOT_FIGURE_BAGROUNG_COLOR = 'white'
+PLOT_BAGROUNG_COLOR = PLOT_FIGURE_BAGROUNG_COLOR
+
+
+def color_graph_background(ligne=1, colonne=1):
+    figure, axes = plt.subplots(ligne,colonne)
+    figure.patch.set_facecolor(PLOT_FIGURE_BAGROUNG_COLOR)
+    if isinstance(axes, np.ndarray):
+        for axe in axes:
+            # Traitement des figures avec plusieurs lignes
+            if isinstance(axe, np.ndarray):
+                for ae in axe:
+                    ae.set_facecolor(PLOT_BAGROUNG_COLOR)
+            else:
+                axe.set_facecolor(PLOT_BAGROUNG_COLOR)
+    else:
+        axes.set_facecolor(PLOT_BAGROUNG_COLOR)
+    return figure, axes
+
 # %% plot_history
 def plot_history(history, loss_name='loss', precision='accuracy', loss_val_name=None, precision_val=None):
 
@@ -88,6 +119,30 @@ def plot_pred(x, y, predictions, range=range(0,1)):
         plt.subplot(1,2,2)
         _plot_value_array(i, predictions[i],  y)
         plt.show()
+
+def plot_pred_multiple(x, y, predictions, range=range(0,1)):
+    # plot some of the numbers
+    nb = range.stop * 2
+
+    nb_cols = 10
+    nb_lignes = (nb//nb_cols)
+    if nb_lignes < 1:
+        nb_lignes = 1
+
+    plt.figure(figsize=(20,(nb_lignes*1.5)))
+    tot = 1
+    for i in range:
+        try:
+            plt.subplot(nb_lignes,nb_cols,tot)                       
+            _plot_image(i, predictions[i], y, x)
+            tot += 1
+            plt.subplot(nb_lignes,nb_cols,tot)
+            _plot_value_array(i, predictions[i],  y)
+            tot += 1
+        except Exception as error:
+            print(f"[plot_pred_multiple] \nERROR on {i} image : {error}")
+
+    plt.show()
 
 # %% _plot_image
 def _plot_image(i, predictions_array, true_label, img):
@@ -126,6 +181,61 @@ def _plot_value_array(i, predictions_array, true_label):
 
   thisplot[true_label_i].set_color('blue')
   thisplot[predicted_label].set_color(color)
+
+# ----------------------------------------------------------------------------------
+#                        PICTURES
+# ----------------------------------------------------------------------------------
+
+def contraste_img(arr, verbose=0):
+    """
+    
+    """
+    # donc appliquer proportionnellement aux autres valeurs
+    max_val = arr.max()
+    if verbose>0:
+        print(f"Image max = {max_val} for 255")
+    res = arr.copy()
+    res = res * 255
+    res = res / max_val
+    res = np.rint(res)
+    res = res.astype(int)
+    return res
+
+def show_digit(some_digit, y):
+    some_digit_image = some_digit.reshape(28, 28)
+    color_graph_background(1,1)
+    plt.imshow(some_digit_image, interpolation = "none", cmap = "afmhot")
+    plt.title(y)
+    plt.axis("off")
+    plt.show()
+
+def draw_digits(df, y=None, nb=None):
+    
+    # plot some of the numbers
+    if nb is None:
+        nb = df.shape[0]
+
+    nb_cols = 10
+    nb_lignes = (nb//nb_cols)
+    if nb_lignes < 1:
+        nb_lignes = 1
+
+    plt.figure(figsize=(14,(nb_lignes*1.5)))
+    for digit_num in range(0,nb):
+        try:
+            plt.subplot(nb_lignes,nb_cols,digit_num+1)
+            grid_data = df.iloc[digit_num].values.reshape(28,28)  # reshape from 1d to 2d pixel array
+            plt.imshow(grid_data, interpolation = "none", cmap = "afmhot")
+            if y is not None:
+                if isinstance(y, pd.DataFrame):
+                    plt.title(y.iloc[digit_num])
+                else:
+                    plt.title(y[digit_num])
+            plt.axis("off")
+        except Exception as error:
+            print(f"[draw_digits] \nERROR on {digit_num} image : {error}")
+    plt.tight_layout()
+    plt.show()
 # ----------------------------------------------------------------------------------
 #                        TEST
 # ----------------------------------------------------------------------------------
