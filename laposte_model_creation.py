@@ -21,12 +21,19 @@ def preprocess_data(x, y,nb_classes, verbose=0):
     # Make sure images have shape (28, 28, 1)
     x_preprocess = np.expand_dims(x_preprocess, -1)
     
+    if verbose > 0:
+        print(f"[{short_name}]\tINFO : x = {x_preprocess.shape}", end="")
+
     # OneHot encoder
     # convert class vectors to binary class matrices
-    y_preprocess = to_categorical(y.copy(), nb_classes)
+    y_preprocess = None
+    if y is not None:
+        y_preprocess = to_categorical(y.copy(), nb_classes)
+        if verbose > 0:
+            print(f"y = {y_preprocess.shape}", end="")
 
     if verbose > 0:
-        print(f"[{short_name}]\tINFO : x = {x_preprocess.shape}, y = {y_preprocess.shape} after preprocess")
+        print(f" after preprocess")
 
     return x_preprocess, y_preprocess
 
