@@ -128,3 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 _OLD/*
+model/*
+data/damien_004.JPG
+data/damien_005.JPG
